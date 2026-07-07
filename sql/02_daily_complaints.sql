@@ -8,11 +8,11 @@
 --
 -- LEFT JOIN so a complaint day is never dropped for missing weather.
 --
--- Placeholders substituted by pipeline/build_marts.py:
---   {{PROJECT}}       -> GCP project id
---   {{WEATHER}}       -> fully-qualified weather table
---   {{WDATE}}         -> weather date column (discovered from the table schema)
---   {{WEATHER_COLS}}  -> pinned weather metric columns present in the table
+-- Rendered by pipeline/build_marts.py, which substitutes the project id, the
+-- weather table, its auto-discovered date column, and the pinned weather metric
+-- list. (Placeholder tokens are intentionally not spelled out here: the metric
+-- list is multi-line, and naming the token in a comment would let the blind
+-- string-replace expand it inside this comment and break the query.)
 CREATE OR REPLACE TABLE `{{PROJECT}}.nyc311.daily_complaints` AS
 WITH agg AS (
   SELECT
