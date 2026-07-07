@@ -17,7 +17,6 @@ import sys
 from google.cloud import bigquery
 
 import common
-from build_marts import discover_weather_date_col
 
 # Reconciliation tolerance: the source can gain rows between the count call and
 # the pull, so a small positive drift is expected, not an error.
@@ -120,21 +119,22 @@ def main() -> None:
             failures.append(f"{val} rows with {name}")
 
     # 5. Weather-join coverage (soft) ----------------------------------------
-    wdate = discover_weather_date_col(bq)
     cov = scalar(
         bq,
         f"""
-        WITH days AS (SELECT DISTINCT complaint_date FROM {daily}),
-        wx AS (SELECT DISTINCT CAST(`{wdate}` AS DATE) d
-               FROM `{common.WEATHER_TABLE}`)
         SELECT
-          (SELECT COUNT(*) FROM days) AS total_days,
-          (SELECT COUNT(*) FROM days d WHERE d.complaint_date IN (SELECT d FROM wx)) AS matched_days
+          COUNT(DISTINCT complaint_date) AS total_days,
+          COUNT(DISTINCT IF(has_weather, complaint_date, NULL)) AS matched_days,
+          COUNT(*) AS total_rows,
+          COUNTIF(has_weather) AS matched_rows
+        FROM {daily}
         """,
     )
-    frac = cov.matched_days / cov.total_days if cov.total_days else 0
+    frac_d = cov.matched_days / cov.total_days if cov.total_days else 0
+    frac_r = cov.matched_rows / cov.total_rows if cov.total_rows else 0
     print("\n[5] Weather-join coverage (soft)")
-    print(f"    days with weather: {cov.matched_days}/{cov.total_days} ({frac:.2%})")
+    print(f"    days with weather: {cov.matched_days}/{cov.total_days} ({frac_d:.2%})")
+    print(f"    rows with weather: {cov.matched_rows}/{cov.total_rows} ({frac_r:.2%})")
 
     # Summary ----------------------------------------------------------------
     print("\n=== Summary ===")

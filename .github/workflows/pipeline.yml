@@ -18,6 +18,11 @@ on:
         description: "SODA page size"
         required: false
         default: "50000"
+      skip_ingest:
+        description: "Skip ingest; rebuild marts + verify on existing raw data"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   id-token: write
@@ -55,6 +60,7 @@ jobs:
         run: pip install -r pipeline/requirements.txt
 
       - name: Ingest 311 -> raw
+        if: ${{ github.event.inputs.skip_ingest != 'true' }}
         run: python pipeline/ingest_311.py
 
       - name: Build clean view + daily_complaints

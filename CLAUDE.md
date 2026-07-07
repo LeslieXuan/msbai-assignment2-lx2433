@@ -111,6 +111,31 @@ the **full raw JSON** per row. The clean view then `SAFE`-casts and selects only
 columns via `JSON_VALUE`. New/renamed/removed source columns therefore never break
 ingestion; they only surface when we choose to promote them into the clean layer.
 
+### Weather columns (pinned into `daily_complaints`)
+
+The weather source `m_weather_daily_nyc` is a controlled internal mart, so — unlike the
+311 source — we **pin** its columns by name into `daily_complaints` for clarity in Part 2.
+Its date column is auto-discovered (currently `date`, type `DATE`). Pinned metrics:
+
+| Group | Columns |
+|---|---|
+| Temperature (°F) | `tmin_f`, `tmax_f`, `tavg_f`; flags `is_hot_day`, `is_freezing` |
+| Precip / snow (in) | `prcp_inches`, `snow_inches`, `snow_depth_inches`; flags `is_rainy`, `is_snowy` |
+| Humidity / moisture | `rh_avg`, `rh_min`, `rh_max`, `is_humid`, `dewpoint_f`, `wetbulb_f` |
+| Pressure / wind | `sea_level_pressure_hpa`, `wind_avg_mph`, `wind_gust_mph`, `wind_dir_deg` |
+| Sky flags | `is_foggy`, `is_thunder`, `is_hazy` |
+
+Pinning is **drift-guarded**: `build_marts.py` intersects this list with the table's live
+schema and drops (with a warning) any metric that has been renamed/removed, so a weather
+schema change degrades instead of hard-failing the build.
+
+**Calendar helpers are derived from `complaint_date`, not the weather join.** `year`,
+`month`, `day`, `day_of_week` (1=Sun…7=Sat), `is_weekend`, and `season` are computed from
+`complaint_date` in `daily_complaints` so they are populated even on a day missing weather.
+A `has_weather` boolean flags rows where the weather join matched (weather metrics are NULL
+otherwise). The weather table also carries its own copies of these calendar fields; we do
+not select them, to avoid NULLs and duplication.
+
 ---
 
 ## 4. Pipeline layers

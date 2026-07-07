@@ -4,7 +4,8 @@
   requests_clean --(sql/02)--> nyc311.daily_complaints (table, weather-joined)
 
 The weather table's schema is discovered at build time (we only have table-level
-read access), so the join adapts to whatever the date column is actually called.
+read access), so the join adapts to whatever the date column is actually called
+and the pinned metric list degrades gracefully if a column is renamed upstream.
 """
 from __future__ import annotations
 
@@ -18,6 +19,22 @@ SQL_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "sql")
 
 # Preference order for identifying the weather date column when several exist.
 DATE_TYPES = ("DATE", "DATETIME", "TIMESTAMP")
+
+# Weather metrics we pin into daily_complaints, in display order (CLAUDE.md §3).
+# Calendar helpers (year/month/day/day_of_week/is_weekend/season) are intentionally
+# NOT listed here: sql/02 derives them from complaint_date so they are never NULL
+# on a weather-missing day. Any name here that is absent from the table is dropped
+# with a warning, so an upstream rename degrades instead of hard-failing the build.
+WEATHER_METRICS = [
+    "tmin_f", "tmax_f", "tavg_f",
+    "prcp_inches", "snow_inches", "snow_depth_inches",
+    "is_rainy", "is_snowy", "is_hot_day", "is_freezing",
+    "rh_avg", "rh_min", "rh_max", "is_humid",
+    "dewpoint_f", "wetbulb_f",
+    "sea_level_pressure_hpa",
+    "wind_avg_mph", "wind_gust_mph", "wind_dir_deg",
+    "is_foggy", "is_thunder", "is_hazy",
+]
 
 
 def read_sql(name: str) -> str:
@@ -50,6 +67,19 @@ def discover_weather_date_col(bq: bigquery.Client) -> str:
     return chosen
 
 
+def build_weather_cols(bq: bigquery.Client) -> str:
+    """Return the pinned weather metrics that actually exist, as a SELECT fragment."""
+    present = {f.name for f in bq.get_table(common.WEATHER_TABLE).schema}
+    cols = [c for c in WEATHER_METRICS if c in present]
+    missing = [c for c in WEATHER_METRICS if c not in present]
+    if missing:
+        print(f"WARN: pinned weather metrics not in table, dropped: {missing}")
+    if not cols:
+        raise SystemExit("No pinned weather metrics found in the weather table.")
+    print(f"pinned {len(cols)} weather metrics")
+    return ",\n  ".join(f"w.`{c}`" for c in cols)
+
+
 def main() -> None:
     cfg = common.load_config()
     bq = bigquery.Client(project=cfg.project, location=cfg.location)
@@ -60,12 +90,14 @@ def main() -> None:
     run(bq, read_sql("01_requests_clean.sql").replace("{{PROJECT}}", cfg.project))
 
     wdate = discover_weather_date_col(bq)
+    weather_cols = build_weather_cols(bq)
     print("Building nyc311.daily_complaints ...")
     sql = (
         read_sql("02_daily_complaints.sql")
         .replace("{{PROJECT}}", cfg.project)
         .replace("{{WEATHER}}", common.WEATHER_TABLE)
         .replace("{{WDATE}}", wdate)
+        .replace("{{WEATHER_COLS}}", weather_cols)
     )
     run(bq, sql)
 
