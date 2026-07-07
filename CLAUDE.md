@@ -186,18 +186,28 @@ concerns and specified there.
 ## 7. Repo layout (target)
 
 ```
-CLAUDE.md              ← this file (Specify decisions)
-DECISIONS.md           ← Part 3: defense of choices
+CLAUDE.md                       ← this file (Specify decisions)
+DECISIONS.md                    ← Part 3: defense of choices
 README.md
-ingest/                ← Socrata ingester (Python)
-sql/                   ← clean view + daily_complaints DDL/queries
-  01_requests_clean.sql
-  02_daily_complaints.sql
-verify/                ← verification queries + runner
-analysis/              ← Part 2 notebooks / queries
-dashboard/             ← Part 3 Streamlit app + Dockerfile
-.github/workflows/     ← WIF-authed ingest, build-daily, deploy
+pipeline/
+  common.py                     ← shared config, SODA client w/ backoff, helpers
+  ingest_311.py                 ← Socrata → GCS → nyc311_raw.requests_raw
+  build_marts.py                ← runs sql/01 + sql/02 (weather col auto-discovered)
+  verify.py                     ← verification checks (§6)
+  requirements.txt
+sql/
+  01_requests_clean.sql         ← clean typed dedup view (template)
+  02_daily_complaints.sql       ← daily aggregate + weather join (template)
+analysis/                       ← Part 2 notebooks / queries
+dashboard/                      ← Part 3 Streamlit app + Dockerfile
+.github/workflows/
+  pipeline.yml                  ← WIF-authed ingest → build → verify
 ```
+
+SQL files are templates (`{{PROJECT}}`, `{{WDATE}}`, `{{WEATHER}}`) rendered by
+`build_marts.py`. The weather date column is **discovered from the table's schema at
+build time** (we hold only table-level read on `nyu-datasets.weather`), so the join
+adapts instead of hardcoding a column name we cannot verify from CI.
 
 ---
 

@@ -1,0 +1,64 @@
+name: nyc311-pipeline
+
+# Part 1 pipeline: ingest 311 -> raw table -> clean view -> daily_complaints
+# (weather-joined) -> verification. Manual trigger with a configurable window.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Window start (inclusive, YYYY-MM-DD)"
+        required: true
+        default: "2023-01-01"
+      end_date:
+        description: "Window end (inclusive, YYYY-MM-DD)"
+        required: true
+        default: "2025-12-31"
+      page_size:
+        description: "SODA page size"
+        required: false
+        default: "50000"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  GCP_PROJECT: msbai-dwd-lx2433
+  GCS_BUCKET: msbai-dwd-lx2433-nyc311-raw
+  BQ_DATASET_RAW: nyc311_raw
+  BQ_DATASET: nyc311
+  BQ_LOCATION: US
+  START_DATE: ${{ github.event.inputs.start_date }}
+  END_DATE: ${{ github.event.inputs.end_date }}
+  PAGE_SIZE: ${{ github.event.inputs.page_size }}
+  SODA_APP_TOKEN: ${{ secrets.SODA_APP_TOKEN }}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/526972029302/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
+          service_account: claude-agent@msbai-dwd-lx2433.iam.gserviceaccount.com
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Ingest 311 -> raw
+        run: python pipeline/ingest_311.py
+
+      - name: Build clean view + daily_complaints
+        run: python pipeline/build_marts.py
+
+      - name: Verify
+        run: python pipeline/verify.py
