@@ -13,18 +13,27 @@ WITH top_types AS (
   ORDER BY SUM(complaint_count) DESC
   LIMIT {{TOPN}}
 ),
+-- Extra explicitly-requested types (e.g. Sewer / flooding) that fall below TOPN.
+extra_types AS (
+  SELECT ct AS complaint_type FROM UNNEST(ARRAY<STRING>[{{EXTRA_TYPES}}]) AS ct
+),
+sel_types AS (
+  SELECT complaint_type FROM top_types
+  UNION DISTINCT
+  SELECT complaint_type FROM extra_types
+),
 cal AS (
   SELECT d AS complaint_date
   FROM UNNEST(GENERATE_DATE_ARRAY(DATE '2023-01-01', DATE '2025-12-31')) AS d
 ),
 grid AS (
   SELECT c.complaint_date, t.complaint_type
-  FROM cal c CROSS JOIN top_types t
+  FROM cal c CROSS JOIN sel_types t
 ),
 counts AS (
   SELECT complaint_date, complaint_type, SUM(complaint_count) AS cnt
   FROM `{{PROJECT}}.nyc311.daily_complaints`
-  WHERE complaint_type IN (SELECT complaint_type FROM top_types)
+  WHERE complaint_type IN (SELECT complaint_type FROM sel_types)
   GROUP BY complaint_date, complaint_type
 ),
 -- One weather/calendar row per calendar day (identical across type/borough).
