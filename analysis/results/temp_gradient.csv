@@ -1,0 +1,20 @@
+complaint_type,temp_corr_within_stratum
+Noise - Street/Sidewalk,0.57
+Dirty Condition,0.42
+Derelict Vehicles,0.26
+Abandoned Vehicle,0.23
+Water System,0.22
+Noise - Commercial,0.21
+Root/Sewer/Sidewalk Condition,0.2
+Illegal Parking,0.12
+Sewer,0.08
+Water Drainage,0.08
+Sewer Maintenance,0.05
+UNSANITARY CONDITION,0.04
+Noise - Residential,0.04
+Street Condition,0.02
+Noise,0.01
+PAINT/PLASTER,-0.07
+Blocked Driveway,-0.07
+PLUMBING,-0.17
+HEAT/HOT WATER,-0.63
