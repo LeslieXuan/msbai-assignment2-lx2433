@@ -4,9 +4,10 @@
 weather once we hold **season** and **day-of-week** fixed — and how large is the effect?
 
 **Data.** `nyc311.daily_complaints`, 2023-01-01 … 2025-12-31 (1,096 days). Panel =
-top-15 complaint types × every calendar day, citywide, **zero-filled**, joined to that
-day's weather (16,440 type-days). Produced by `analysis/panel.sql` + `analysis/analyze.py`
-(run: GitHub Actions **nyc311-analyze**).
+top-15 complaint types **plus keyword-matched sewer/flood types** (`Sewer`,
+`Root/Sewer/Sidewalk Condition`, `Sewer Maintenance`, `Water Drainage`) × every calendar
+day, citywide, **zero-filled**, joined to that day's weather (19 types, 20,824 type-days).
+Produced by `analysis/panel.sql` + `analysis/analyze.py` (run: GitHub Actions **nyc311-analyze**).
 
 **Method.** For each complaint type and weather condition we compute a **direct-standardized
 rate ratio** across `season × is_weekend` strata: within each stratum we compare the mean
@@ -37,20 +38,25 @@ Plumbing 197k · Paint/Plaster 183k · Dirty Condition 170k · Noise 164k · Der
    On **hot** days `Water System` rises **+149.5%** (2.50×), ~189 → ~471/day, **+3,200/year**,
    hold-out **ok**. Consistent with opened fire hydrants in heat; falls on rainy days (−16.4%, ok).
 
-3. **Street/sidewalk noise is a fair-weather, warm-weather activity.**
+3. **Rain drives Sewer complaints (the classic flooding signal, confirmed).**
+   On **rainy** days `Sewer` rises **+87.0%** (1.87×), ~59 → ~110/day, **≈ +6,300/year**,
+   hold-out **ok**. It is specifically *rain*-driven, not temperature: flat temperature gradient
+   (+0.08) and *suppressed* on snowy (−17.4%, ok) and freezing (−31.9%, ok) days.
+
+4. **Street/sidewalk noise is a fair-weather, warm-weather activity.**
    `Noise - Street/Sidewalk` has the **highest temperature correlation (+0.57)** and is strongly
    **suppressed by precipitation/cold**, all replicated: rainy **−25.5%** (ok), snowy **−41.6%**
    (ok), freezing **−61.3%** (ok). Its hot-day *binary* jump (+38.8%) did **not** replicate, so
    we lead with the temperature gradient + precip suppression, which do.
 
-4. **Heat raises street-life / sanitation nuisance complaints (modest, robust).**
+5. **Heat raises street-life / sanitation nuisance complaints (modest, robust).**
    `Dirty Condition` +19.2% on hot days (ok; temp corr +0.42); `Plumbing` +19.5% on freezing
    days (ok); `Unsanitary Condition` small but consistent (+5–7%, ok).
 
-5. **Rain and snow suppress outdoor complaints broadly**; **humidity has no reliable effect** —
+6. **Rain and snow suppress outdoor complaints broadly**; **humidity has no reliable effect** —
    *every* humid-day effect failed the hold-out (`NO`), so we discard humidity.
 
-6. **"Heat → noise" is type-specific, not general.** Street/sidewalk noise rises with heat, but
+7. **"Heat → noise" is type-specific, not general.** Street/sidewalk noise rises with heat, but
    `Noise` (−23.5% hot) and `Noise - Residential` (−10.9% hot) *fall*. Reported honestly rather
    than forced to fit the hypothesis.
 
@@ -85,14 +91,18 @@ Excess/yr = standardized extra (or fewer) complaints per year on condition days.
 | Noise | −23.5% | 0.77 | 160→122 | −425 | ok |
 | HEAT/HOT WATER | −69.0% | 0.31 | 455→141 | −3,562 | NO |
 
-### RAINY days (mostly suppression; no top-15 positive of note)
-| type | pct | ratio | excess/yr | hold-out |
-|---|--:|--:|--:|:--:|
-| PAINT/PLASTER | +3.3% | 1.03 | +660 | ok |
-| Noise - Commercial | −9.8% | 0.90 | −2,270 | ok |
-| HEAT/HOT WATER | −15.3% | 0.85 | −14,730 | ok |
-| Water System | −16.4% | 0.84 | −3,851 | ok |
-| Noise - Street/Sidewalk | −25.5% | 0.75 | −15,114 | ok |
+### RAINY days
+| type | pct | ratio | base→cond/day | excess/yr | hold-out |
+|---|--:|--:|--|--:|:--:|
+| **Sewer** | **+87.0%** | 1.87 | 59→110 | **+6,321** | ok |
+| PAINT/PLASTER | +3.3% | 1.03 | 165→170 | +660 | ok |
+| Noise - Commercial | −9.8% | 0.90 | 188→170 | −2,270 | ok |
+| HEAT/HOT WATER | −15.3% | 0.85 | 784→664 | −14,730 | ok |
+| Water System | −16.4% | 0.84 | 190→159 | −3,851 | ok |
+| Noise - Street/Sidewalk | −25.5% | 0.75 | 482→359 | −15,114 | ok |
+
+*Sub-1k/day flood types (`Sewer Maintenance`, `Water Drainage`) show huge % swings on rain/humid
+days but off near-zero baselines and **fail the hold-out** (`NO`) — discarded as noise.*
 
 ### SNOWY days
 | type | pct | ratio | excess/yr | hold-out |
@@ -131,18 +141,19 @@ Excess/yr = standardized extra (or fewer) complaints per year on condition days.
   when home). We control season and weekday, nothing else; do not read these as causal effects.
 - **Binary flags are coarse.** `is_hot_day`/`is_rainy` thresholds compress a continuous signal; the
   temperature correlation is a useful cross-check (and why we lead with it for Noise-Street/Sidewalk).
-- **Top-15 scope.** The classic **rain → Sewer / street-flooding** hypothesis is **not testable
-  here**: those types fall outside the top-15 by volume. Re-running `analyze.py` with an explicit
-  type list (e.g. `Sewer`, `Street Flooding (SJ)`) is the obvious follow-up.
+- **Low-volume types are noisy.** `Sewer` (82k) is solid, but `Sewer Maintenance` (2.8k) and
+  `Water Drainage` (136) produce extreme % swings off tiny baselines that don't replicate — we
+  keep only hold-out-passing effects and flag the rest.
 - **Single city, three years.** No claim of generalization beyond NYC 2023–2025.
 
 ## Dashboard claims (Part 3 — one sentence each)
 
 1. On **freezing** days, `HEAT/HOT WATER` complaints rise **~160% (2.6×)** — roughly **+59,000/year**.
 2. `Water System` (open-hydrant) complaints jump **~150%** on **hot** days.
-3. **Street/sidewalk noise tracks temperature** (corr **+0.57**) and drops **25–61%** on rainy,
+3. On **rainy** days, `Sewer` complaints rise **~87% (1.9×)** — about **+6,300/year**.
+4. **Street/sidewalk noise tracks temperature** (corr **+0.57**) and drops **25–61%** on rainy,
    snowy, or freezing days.
-4. **Rain and snow suppress outdoor complaints** across the board, while **humidity shows no
+5. **Rain and snow suppress outdoor complaints** across the board, while **humidity shows no
    reliable effect**.
 
 ## Reproduce
