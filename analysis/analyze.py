@@ -45,26 +45,34 @@ def load_panel(bq: bigquery.Client) -> pd.DataFrame:
     sql = open(os.path.join(os.path.dirname(__file__), "panel.sql")).read()
     sql = sql.replace("{{PROJECT}}", PROJECT).replace("{{TOPN}}", str(TOPN))
     df = bq.query(sql).result().to_dataframe()
-    df = df[df["has_weather"]].copy()
+    # BigQuery returns nullable dtypes (Int64/boolean); coerce to plain numeric so
+    # groupby/astype behave. A flag can be NA even when the row matched weather, so
+    # keep NAs here and drop them per-condition in adjusted_effect.
+    df = df[df["has_weather"].fillna(False).astype(bool)].copy()
+    df["cnt"] = pd.to_numeric(df["cnt"], errors="coerce").fillna(0.0)
+    df["year"] = pd.to_numeric(df["year"], errors="coerce").astype(int)
+    df["is_weekend"] = pd.to_numeric(df["is_weekend"], errors="coerce").fillna(0).astype(int)
+    df["tavg_f"] = pd.to_numeric(df["tavg_f"], errors="coerce")
     for c in BINARY_CONDITIONS:
-        df[c] = df[c].astype(int)
-    df["is_weekend"] = df["is_weekend"].astype(int)
+        df[c] = pd.to_numeric(df[c], errors="coerce")
     return df
 
 
 def adjusted_effect(sub: pd.DataFrame, cond: str):
     """Direct-standardized adj means over season x is_weekend strata."""
-    strata = sub.groupby(["season", "is_weekend", cond])["cnt"].mean().unstack(cond)
+    s = sub.dropna(subset=[cond, "cnt"]).copy()
+    s[cond] = s[cond].astype(int)
+    strata = s.groupby(["season", "is_weekend", cond])["cnt"].mean().unstack(cond)
     if 0 not in strata.columns or 1 not in strata.columns:
         return None
     both = strata.dropna(subset=[0, 1])
     if both.empty:
         return None
-    weights = sub.groupby(["season", "is_weekend"]).size()
+    weights = s.groupby(["season", "is_weekend"]).size()
     w = weights.reindex(both.index).astype(float)
     adj0 = float(np.average(both[0], weights=w))
     adj1 = float(np.average(both[1], weights=w))
-    n_cond = int((sub[cond] == 1).sum())
+    n_cond = int((s[cond] == 1).sum())
     rr = adj1 / adj0 if adj0 > 0 else np.nan
     return {
         "adj_baseline": adj0,
