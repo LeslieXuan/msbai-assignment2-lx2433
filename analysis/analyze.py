@@ -30,6 +30,11 @@ from google.cloud import bigquery
 PROJECT = os.environ.get("GCP_PROJECT", "msbai-dwd-lx2433")
 LOCATION = os.environ.get("BQ_LOCATION", "US")
 TOPN = int(os.environ.get("TOPN", "15"))
+# Weather-relevant complaint types to include even if they fall below TOPN, matched
+# by keyword so we don't hardcode exact source spellings (e.g. rain -> Sewer/flooding).
+EXTRA_KEYWORDS = [k.strip() for k in
+                  os.environ.get("EXTRA_TYPE_KEYWORDS", "SEWER,FLOOD,DRAIN").split(",")
+                  if k.strip()]
 OUTDIR = os.path.join(os.path.dirname(__file__), "results")
 
 BINARY_CONDITIONS = {
@@ -41,9 +46,30 @@ BINARY_CONDITIONS = {
 }
 
 
-def load_panel(bq: bigquery.Client) -> pd.DataFrame:
+def discover_extra_types(bq: bigquery.Client) -> list[str]:
+    """Find weather-relevant complaint types (by keyword) to add beyond the top-N."""
+    if not EXTRA_KEYWORDS:
+        return []
+    like = " OR ".join(f"UPPER(complaint_type) LIKE '%{k.upper()}%'" for k in EXTRA_KEYWORDS)
+    q = (f"SELECT complaint_type, SUM(complaint_count) v "
+         f"FROM `{PROJECT}.nyc311.daily_complaints` WHERE {like} "
+         f"GROUP BY complaint_type ORDER BY v DESC")
+    rows = list(bq.query(q).result())
+    print(f"Extra weather-relevant types (keywords {EXTRA_KEYWORDS}):")
+    for r in rows:
+        print(f"  {int(r.v):>9,}  {r.complaint_type}")
+    return [r.complaint_type for r in rows]
+
+
+def _sql_str_list(items: list[str]) -> str:
+    return ", ".join("'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'" for s in items)
+
+
+def load_panel(bq: bigquery.Client, extra_types: list[str]) -> pd.DataFrame:
     sql = open(os.path.join(os.path.dirname(__file__), "panel.sql")).read()
-    sql = sql.replace("{{PROJECT}}", PROJECT).replace("{{TOPN}}", str(TOPN))
+    sql = (sql.replace("{{PROJECT}}", PROJECT)
+              .replace("{{TOPN}}", str(TOPN))
+              .replace("{{EXTRA_TYPES}}", _sql_str_list(extra_types)))
     df = bq.query(sql).result().to_dataframe()
     # BigQuery returns nullable dtypes (Int64/boolean); coerce to plain numeric so
     # groupby/astype behave. A flag can be NA even when the row matched weather, so
@@ -125,8 +151,9 @@ def holdout_ok(rr_tr, rr_te) -> bool:
 def main() -> None:
     os.makedirs(OUTDIR, exist_ok=True)
     bq = bigquery.Client(project=PROJECT, location=LOCATION)
-    df = load_panel(bq)
-    print(f"Panel: {len(df):,} rows, {df['complaint_type'].nunique()} types, "
+    extra_types = discover_extra_types(bq)
+    df = load_panel(bq, extra_types)
+    print(f"\nPanel: {len(df):,} rows, {df['complaint_type'].nunique()} types, "
           f"{df['complaint_date'].nunique()} days\n")
 
     types_by_vol = (df.groupby("complaint_type")["cnt"].sum()
