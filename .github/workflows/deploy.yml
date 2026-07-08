@@ -43,6 +43,7 @@ jobs:
             --project "$GCP_PROJECT" \
             --region "${{ github.event.inputs.region }}" \
             --service-account "$SA" \
+            --build-service-account "projects/$GCP_PROJECT/serviceAccounts/$SA" \
             --set-env-vars "GCP_PROJECT=$GCP_PROJECT,BQ_LOCATION=US" \
             --allow-unauthenticated \
             --memory 1Gi \
