@@ -1,0 +1,50 @@
+name: nyc311-analyze
+
+# Part 2: weather-sensitivity analysis over nyc311.daily_complaints.
+# Read-only against BigQuery; prints the report to the log and uploads result CSVs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      topn:
+        description: "Number of top complaint types to analyze"
+        required: false
+        default: "15"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  GCP_PROJECT: msbai-dwd-lx2433
+  BQ_LOCATION: US
+  TOPN: ${{ github.event.inputs.topn }}
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/526972029302/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
+          service_account: claude-agent@msbai-dwd-lx2433.iam.gserviceaccount.com
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r analysis/requirements.txt
+
+      - name: Run analysis
+        run: python analysis/analyze.py
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: analysis-results
+          path: analysis/results/
