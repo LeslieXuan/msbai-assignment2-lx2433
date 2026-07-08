@@ -1,0 +1,94 @@
+condition,complaint_type,pct_change,rate_ratio,adj_baseline_per_day,adj_condition_per_day,excess_per_year,holdout
+hot,Water System,149.5,2.5,188.8,471.2,3200,ok
+hot,Noise - Street/Sidewalk,38.8,1.39,506.7,703.1,2226,NO
+hot,Dirty Condition,19.2,1.19,176.5,210.3,384,ok
+hot,PLUMBING,7.9,1.08,185.8,200.4,166,ok
+hot,UNSANITARY CONDITION,5.2,1.05,364.5,383.5,215,ok
+hot,Noise - Commercial,-0.0,1.0,159.6,159.5,-1,ok
+hot,Derelict Vehicles,-0.7,0.99,146.1,145.1,-12,ok
+hot,Root/Sewer/Sidewalk Condition,-2.7,0.97,34.5,33.6,-10,ok
+hot,Blocked Driveway,-4.0,0.96,458.0,439.6,-209,NO
+hot,Illegal Parking,-7.4,0.93,1470.7,1361.5,-1237,ok
+hot,PAINT/PLASTER,-7.9,0.92,186.3,171.6,-166,NO
+hot,Abandoned Vehicle,-10.6,0.89,202.1,180.6,-244,ok
+hot,Noise - Residential,-10.9,0.89,881.2,785.0,-1091,ok
+hot,Street Condition,-19.4,0.81,206.8,166.7,-454,ok
+hot,Noise,-23.5,0.77,159.7,122.3,-425,ok
+hot,Sewer,-25.1,0.75,84.9,63.6,-242,ok
+hot,HEAT/HOT WATER,-69.0,0.31,455.4,141.1,-3562,NO
+hot,Sewer Maintenance,-100.0,0.0,3.8,0.0,-43,NO
+hot,Water Drainage,-100.0,0.0,0.2,0.0,-2,NO
+rainy,Sewer Maintenance,1059.0,11.59,0.7,8.5,951,NO
+rainy,Water Drainage,249.7,3.5,0.1,0.3,24,NO
+rainy,Sewer,87.0,1.87,59.1,110.4,6321,ok
+rainy,PAINT/PLASTER,3.3,1.03,165.1,170.4,660,ok
+rainy,Blocked Driveway,0.4,1.0,464.2,465.8,204,ok
+rainy,UNSANITARY CONDITION,0.2,1.0,322.8,323.5,95,NO
+rainy,Street Condition,-0.3,1.0,187.5,187.0,-60,NO
+rainy,PLUMBING,-2.1,0.98,181.0,177.2,-466,ok
+rainy,Illegal Parking,-3.8,0.96,1441.6,1387.2,-6694,ok
+rainy,Root/Sewer/Sidewalk Condition,-4.9,0.95,27.9,26.6,-167,ok
+rainy,Abandoned Vehicle,-5.0,0.95,188.4,179.0,-1152,ok
+rainy,Derelict Vehicles,-6.1,0.94,133.7,125.5,-1005,ok
+rainy,Dirty Condition,-6.7,0.93,158.2,147.7,-1296,ok
+rainy,Noise - Residential,-6.7,0.93,1068.5,997.0,-8792,NO
+rainy,Noise,-7.3,0.93,153.1,142.0,-1367,ok
+rainy,Noise - Commercial,-9.8,0.9,188.4,170.0,-2270,ok
+rainy,HEAT/HOT WATER,-15.3,0.85,784.1,664.4,-14730,ok
+rainy,Water System,-16.4,0.84,190.4,159.1,-3851,ok
+rainy,Noise - Street/Sidewalk,-25.5,0.75,482.0,359.1,-15114,ok
+snowy,HEAT/HOT WATER,43.6,1.44,1098.1,1577.1,4152,NO
+snowy,PLUMBING,12.2,1.12,197.2,221.2,208,NO
+snowy,Street Condition,7.0,1.07,216.7,231.8,131,NO
+snowy,UNSANITARY CONDITION,-1.7,0.98,313.1,307.8,-46,NO
+snowy,PAINT/PLASTER,-3.1,0.97,179.6,174.1,-48,ok
+snowy,Blocked Driveway,-6.5,0.93,461.6,431.5,-261,ok
+snowy,Noise - Residential,-9.3,0.91,974.0,883.0,-788,ok
+snowy,Water System,-13.2,0.87,143.8,124.8,-165,ok
+snowy,Noise,-14.9,0.85,151.4,128.9,-195,ok
+snowy,Illegal Parking,-15.7,0.84,1414.7,1193.0,-1922,ok
+snowy,Sewer,-17.4,0.83,69.8,57.7,-105,ok
+snowy,Derelict Vehicles,-21.1,0.79,135.5,106.9,-248,ok
+snowy,Abandoned Vehicle,-24.4,0.76,192.1,145.3,-406,ok
+snowy,Dirty Condition,-27.3,0.73,133.9,97.3,-317,ok
+snowy,Root/Sewer/Sidewalk Condition,-29.5,0.7,26.0,18.3,-66,ok
+snowy,Noise - Commercial,-32.0,0.68,150.4,102.3,-417,ok
+snowy,Noise - Street/Sidewalk,-41.6,0.58,227.3,132.8,-819,ok
+freezing,HEAT/HOT WATER,159.8,2.6,772.2,2006.0,58810,ok
+freezing,PLUMBING,19.5,1.19,176.6,211.0,1639,ok
+freezing,Water System,9.2,1.09,131.7,143.8,576,NO
+freezing,PAINT/PLASTER,8.1,1.08,166.2,179.7,645,ok
+freezing,UNSANITARY CONDITION,6.8,1.07,309.8,330.9,1008,ok
+freezing,Street Condition,4.7,1.05,189.3,198.2,423,ok
+freezing,Blocked Driveway,-0.3,1.0,473.8,472.3,-72,NO
+freezing,Illegal Parking,-6.4,0.94,1437.5,1346.1,-4360,ok
+freezing,Noise,-7.5,0.92,157.5,145.6,-565,ok
+freezing,Noise - Residential,-10.5,0.9,1048.2,938.4,-5232,ok
+freezing,Derelict Vehicles,-12.6,0.87,131.7,115.1,-788,ok
+freezing,Abandoned Vehicle,-15.6,0.84,184.7,155.9,-1374,ok
+freezing,Noise - Commercial,-18.7,0.81,189.8,154.4,-1688,ok
+freezing,Dirty Condition,-22.7,0.77,143.9,111.2,-1556,ok
+freezing,Root/Sewer/Sidewalk Condition,-28.8,0.71,25.9,18.5,-356,ok
+freezing,Sewer,-31.9,0.68,76.7,52.2,-1168,ok
+freezing,Noise - Street/Sidewalk,-61.3,0.39,361.3,139.9,-10550,ok
+freezing,Sewer Maintenance,-100.0,0.0,3.5,0.0,-165,NO
+freezing,Water Drainage,-100.0,0.0,0.2,0.0,-8,NO
+humid,Sewer Maintenance,1852.0,19.52,0.8,15.0,909,NO
+humid,Water Drainage,716.9,8.17,0.1,0.6,34,NO
+humid,Sewer,77.8,1.78,63.7,113.3,3173,NO
+humid,PAINT/PLASTER,5.4,1.05,166.1,175.0,569,NO
+humid,UNSANITARY CONDITION,1.8,1.02,322.0,327.7,364,NO
+humid,Street Condition,1.2,1.01,186.6,188.8,137,NO
+humid,PLUMBING,0.9,1.01,172.8,174.3,96,NO
+humid,Dirty Condition,-0.1,1.0,150.6,150.4,-10,NO
+humid,Blocked Driveway,-0.4,1.0,458.8,457.0,-120,NO
+humid,Derelict Vehicles,-3.9,0.96,139.6,134.2,-346,NO
+humid,Abandoned Vehicle,-4.5,0.96,188.2,179.7,-541,NO
+humid,Illegal Parking,-4.5,0.95,1362.6,1301.1,-3937,NO
+humid,Root/Sewer/Sidewalk Condition,-5.4,0.95,27.8,26.3,-96,NO
+humid,Noise,-6.1,0.94,151.6,142.4,-588,NO
+humid,Water System,-8.0,0.92,170.1,156.6,-867,NO
+humid,Noise - Residential,-8.4,0.92,957.7,877.0,-5164,NO
+humid,Noise - Commercial,-8.4,0.92,189.4,173.4,-1023,NO
+humid,Noise - Street/Sidewalk,-21.4,0.79,465.5,365.9,-6375,NO
+humid,HEAT/HOT WATER,-27.0,0.73,696.3,508.2,-12038,NO
