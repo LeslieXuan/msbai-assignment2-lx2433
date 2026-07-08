@@ -30,10 +30,13 @@ grid AS (
   SELECT c.complaint_date, t.complaint_type
   FROM cal c CROSS JOIN sel_types t
 ),
+-- Aggregate all types once; the grid join below restricts to sel_types. (We do
+-- NOT filter here with `IN (SELECT ... FROM sel_types)`: because sel_types is a
+-- UNION of a table-derived CTE and an UNNEST, BigQuery cannot de-correlate that
+-- IN-subquery and errors out.)
 counts AS (
   SELECT complaint_date, complaint_type, SUM(complaint_count) AS cnt
   FROM `{{PROJECT}}.nyc311.daily_complaints`
-  WHERE complaint_type IN (SELECT complaint_type FROM sel_types)
   GROUP BY complaint_date, complaint_type
 ),
 -- One weather/calendar row per calendar day (identical across type/borough).
