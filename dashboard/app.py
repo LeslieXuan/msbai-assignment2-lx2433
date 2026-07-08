@@ -82,7 +82,7 @@ st.caption(
 
 try:
     overview = q(f"""
-        SELECT COUNT(*) AS rows,
+        SELECT COUNT(*) AS n_rows,
                SUM(complaint_count) AS complaints,
                MIN(complaint_date) AS d0, MAX(complaint_date) AS d1,
                COUNT(DISTINCT complaint_type) AS types
@@ -90,7 +90,7 @@ try:
     """).iloc[0]
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Complaints", f"{int(overview.complaints):,}")
-    c2.metric("Daily rows", f"{int(overview['rows']):,}")
+    c2.metric("Daily rows", f"{int(overview.n_rows):,}")
     c3.metric("Complaint types", f"{int(overview.types):,}")
     c4.metric("Window", f"{overview.d0} → {overview.d1}")
 except Exception as e:  # pragma: no cover - surfaced in the UI
